@@ -175,10 +175,15 @@ void *thread_client(void *arg)
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
         if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1)
+        {
+            printf("Stuck\n");
             continue;
+        }
 
         //Processa a jogada
         resposta = board_play(current->coord[0], current->coord[1], current->play1, current->wrongplay, current->jogada, current->color, (current->score));
+
+        printf("Code %d\n", resposta.code);
 
         //Envia a jogada a todos os clientes, incluindo ele próprio
         sendAllPlayers(current, resposta);
@@ -504,6 +509,7 @@ void getBoardState(Client_node* current)
         }
     }
 }
+
 Color generateColor()
 {
     Color color;

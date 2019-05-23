@@ -58,11 +58,11 @@ int main(int argc, char *argv[])
 										board_y1=l;
 										do
 										{
-													//Envia-se as coordenadas para o servidor
-													sendPlay(board_x, board_y);
-													sleep(1);
-													sendPlay(board_x1, board_y1);
-													sleep(1);
+											//Envia-se as coordenadas para o servidor
+											sendPlay(board_x, board_y);
+											//sleep(1);
+											sendPlay(board_x1, board_y1);
+											//sleep(1);
 										}
 										while(board[l*server_dim+k].locked == 0);
 									}
@@ -88,6 +88,5 @@ int main(int argc, char *argv[])
 		}
 	printf("fim\n");
 	free(board);
-	//pthread_join(read_thread, NULL);
   close(sock_fd);
 }

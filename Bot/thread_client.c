@@ -15,6 +15,7 @@ void* readPlays(void *arg)
     while(done != 1)
     {
 		read(sock_fd, &resp, sizeof(play_response));
+		printf("Code %d\n", resp.code);
 
 		switch (resp.code) 
 		{
@@ -32,7 +33,9 @@ void* readPlays(void *arg)
 				break;
 
 			case 3:
-				checkWinner(score_winner);
+				board[resp.play1[1]*dim +resp.play1[0]].locked=1;
+				board[resp.play2[1]*dim +resp.play2[0]].locked=1;
+				checkWinner();
 				break;
 
 			case 4:
