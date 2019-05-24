@@ -11,6 +11,7 @@ void* readPlays(void *dim)
     while(1)
     {
       read(sock_fd, &resp, sizeof(play_response));
+			//printf("Code %d on play1 %d %d, play2 %d %d\n", resp.code, resp.play1[0], resp.play1[1], resp.play2[0], resp.play2[1]);
 
       switch (resp.code) 
 			{

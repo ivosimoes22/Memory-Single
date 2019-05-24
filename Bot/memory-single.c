@@ -34,10 +34,10 @@ int main(int argc, char *argv[])
 	//Cria a thread para ler as jogadas vindas do servidor
 	pthread_create(&read_thread, NULL, readPlays, (void *)(&server_dim) );
 
+	int board_x, board_y, board_x1, board_y1;
+
 	while (!done)
 	{
-			int board_x, board_y, board_x1, board_y1;
-
 			if(jogada==1)
 			{
 				for(i=0; i < server_dim; i++)
@@ -60,9 +60,9 @@ int main(int argc, char *argv[])
 										{
 											//Envia-se as coordenadas para o servidor
 											sendPlay(board_x, board_y);
-											//sleep(1);
+											sleep(1);
 											sendPlay(board_x1, board_y1);
-											//sleep(1);
+											sleep(1);
 										}
 										while(board[l*server_dim+k].locked == 0);
 									}

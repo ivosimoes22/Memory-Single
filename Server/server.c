@@ -170,20 +170,20 @@ void *thread_client(void *arg)
         if (exit_game(current)) break;
 
         //Recebe a joagada deste cliente
-        read(current->player_fd, &current->coord, sizeof(current->coord));
+        if (read(current->player_fd, &current->coord, sizeof(current->coord)) != sizeof(current->coord))
+        {
+            printf("Error in read\n");
+            exit(-1);
+        }
 
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
-        if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1)
-        {
-            printf("Stuck\n");
-            continue;
-        }
+        if (n_clientes < 3 || current->sec2_state == 1 || game_locked == 1) continue;
 
         //Processa a jogada
         resposta = board_play(current->coord[0], current->coord[1], current->play1, current->wrongplay, current->jogada, current->color, (current->score));
 
-        printf("Code %d\n", resposta.code);
+        if (resposta.code == -20) continue;
 
         //Envia a jogada a todos os clientes, incluindo ele próprio
         sendAllPlayers(current, resposta);
@@ -426,7 +426,6 @@ void checkMaxScore()
         }    
         aux = aux->next;
     }
-    printf("%d\n", score_winner);
 }
 
 void informWinner()
@@ -437,7 +436,6 @@ void informWinner()
     aux = client_list;        
     while(aux != NULL)
     {
-        printf("%d\n", (*aux->score));
         //Envia o score a cada um dos jogadores
         write(aux->player_fd, &(*aux->score), sizeof(int));
 
@@ -576,7 +574,6 @@ void ctrl_c_callback_handler(int signum)
         current = current->next;
         deleteClient(aux);
     }
-
     free(board);
 	exit(0);
 }
