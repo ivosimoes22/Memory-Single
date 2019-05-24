@@ -364,8 +364,6 @@ void* thread_func(void *arg)
 
 void* wait5s(void* arg)
 {  
-    printf("Criou Thread 5s\n");
-
     int sem_value;
     Client_node* current = (Client_node*)arg;
     play_response resp;
