@@ -1,2 +1,5 @@
 # ignore an entire directory
 .vscode/
+
+*.o
+*.out

@@ -15,9 +15,13 @@ void init_board(int dim)
   int i, j;
   char * str_place;
   dim_board = dim;
-   
-  board = malloc(sizeof(board_place)* dim *dim);
+  int alloc = 0;
 
+  if (alloc == 0)
+  {
+    board = malloc(sizeof(board_place)* dim *dim);
+    alloc = 1;
+  }
   for( i=0; i < (dim_board*dim_board); i++)
   {
     board[i].v[0] = '\0';
@@ -36,7 +40,7 @@ void init_board(int dim)
         i = random()% dim_board;
         j = random()% dim_board;
         str_place = get_board_place_str(i, j);
-        printf("%d %d -%s-\n", i, j, str_place);
+        //printf("%d %d -%s-\n", i, j, str_place);
       }
       while(str_place[0] != '\0');
       
@@ -49,7 +53,7 @@ void init_board(int dim)
         i = random()% dim_board;
         j = random()% dim_board;
         str_place = get_board_place_str(i, j);
-        printf("%d %d -%s-\n", i, j, str_place);
+        //printf("%d %d -%s-\n", i, j, str_place);
       }
       while(str_place[0] != '\0');
       
@@ -185,6 +189,8 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
         }
         else
         {
+          pthread_mutex_unlock(&mux[x]);
+
           board[linear_conv(play1[0],play1[1])].revealed = 0;
           board[linear_conv(play1[0],play1[1])].first = 0;
           resp.play1[0]= play1[0];

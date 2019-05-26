@@ -3,10 +3,6 @@
 
 //Thread respoonsável por ler jogadas vindas do server
 
-//*** Mudei esta função para aqui pq não fazia muito sentido
-//estar no ficheiro das sockets ***
-
-
 void* readPlays(void *arg)
 {
   	play_response resp;

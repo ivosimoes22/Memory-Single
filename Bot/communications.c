@@ -41,7 +41,10 @@ void checkWinner()
     int score;
 
     //Recebe do servidor o próprio score e impreme-o no ecran
-	read(sock_fd, &score, sizeof(int));
+	if(read(sock_fd, &score, sizeof(int)) != sizeof(int))
+    {
+        printf("Error in read\n");
+    }
 	printf("\nYour score is %d!!\n", score);
 
     //Recebe do servidor se tem o max score (1 || 0)

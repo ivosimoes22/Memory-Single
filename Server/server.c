@@ -178,7 +178,7 @@ void *thread_client(void *arg)
 
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
-        if (n_clientes < 3 || current->sec2_state == 1 || game_locked == 1) continue;
+        if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1) continue;
 
         //Processa a jogada
         resposta = board_play(current->coord[0], current->coord[1], current->play1, current->wrongplay, current->jogada, current->color, (current->score));
@@ -456,6 +456,11 @@ void Reset_game()
 {   
     Client_node* current = client_list;
     play_response resp;
+
+    init_board(dimension);
+    n_corrects = 0;
+    score_winner = 0;
+
     resp.code = 5;
 
     while (current != NULL)
@@ -464,9 +469,6 @@ void Reset_game()
         *(current->score) = 0;
         current = current->next;
     }
-    init_board(dimension);
-    n_corrects = 0;
-    score_winner = 0;
 }
 
 void getBoardState(Client_node* current)

@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
 LINKER_FLAGS_CLIENT =  -pthread 
-OBJ_CLIENT = memory-single
+OBJ_CLIENT = memory-single.out
 
 $(OBJ_CLIENT): memory-single.o thread_client.o  communications.o
 	$(CC) $(CFLAGS) -o $(OBJ_CLIENT) memory-single.o thread_client.o  communications.o $(LINKER_FLAGS_CLIENT)
@@ -16,4 +16,4 @@ communications.o: communications.c communications.h
 	$(CC) -c $(CFLAGS) communications.c
 
 clean::
-	rm -f *.o core a.out memory-single *~
+	rm -f *.o core *.out *~

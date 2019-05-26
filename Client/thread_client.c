@@ -42,8 +42,7 @@ void* readPlays(void *dim)
 				break;
 
 			case 5:
-				clear_board((*(int*)dim));																														//Da reset a board
-				printf("\nNew game started!!\n");
+				clear_board((*(int*)dim));
 				break;
 
 			case -2:
