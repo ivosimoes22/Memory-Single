@@ -1,5 +1,5 @@
 #include "communications.h"
-#include "thread_client.h"
+#include "thread_bot.h"
 
 //Função Main --> Contem o main loop do jogo
 //e iniciação do UI

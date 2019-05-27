@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
 LINKER_FLAGS_CLIENT = -lSDL2 -lSDL2_ttf -pthread 
-OBJ_CLIENT = memory-single.out
+OBJ_CLIENT = memory-single
 
 $(OBJ_CLIENT): memory-single.o thread_client.o UI_library.o communications.o
 	$(CC) $(CFLAGS) -o $(OBJ_CLIENT) memory-single.o thread_client.o UI_library.o communications.o $(LINKER_FLAGS_CLIENT)
@@ -19,4 +19,4 @@ communications.o: communications.c communications.h
 	$(CC) -c $(CFLAGS) communications.c
 
 clean::
-	rm -f *.o core *.out *~
+	rm -f *.o core memory-single *~

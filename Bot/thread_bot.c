@@ -1,4 +1,4 @@
-#include "thread_client.h"
+#include "thread_bot.h"
 #include "communications.h"
 
 //Thread respoonsável por ler jogadas vindas do server

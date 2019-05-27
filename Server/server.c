@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
 
 void *thread_client(void *arg)
 {
+    int read_val;
     //Variavel para a thread ter conhecimento 
     //do seu cliente (que vem na lista de clientes)
     Client_node* current = ((Client_node*)arg);
@@ -170,9 +171,10 @@ void *thread_client(void *arg)
         if (exit_game(current)) break;
 
         //Recebe a joagada deste cliente
-        if (read(current->player_fd, &current->coord, sizeof(current->coord)) != sizeof(current->coord))
+        read_val = read(current->player_fd, &current->coord, sizeof(current->coord));
+        if (read_val != sizeof(current->coord))
         {
-            printf("Error in read\n");
+            printf("Error in read: %d\n", read_val);
             exit(-1);
         }
 
