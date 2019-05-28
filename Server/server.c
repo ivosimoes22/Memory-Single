@@ -178,6 +178,8 @@ void *thread_client(void *arg)
             exit(-1);
         }
 
+        printf("Check1\n");
+
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
         if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1) continue;
@@ -185,22 +187,19 @@ void *thread_client(void *arg)
         //Processa a jogada
         resposta = board_play(current->coord[0], current->coord[1], current->play1, current->wrongplay, current->jogada, current->color, (current->score));
 
+        printf("Coord %d, %d -- Rev %d ", current->coord[0], current->coord[1], board[linear_conv(current->coord[0],current->coord[1])].revealed);
+
         if (resposta.code == -20) continue;
 
         //Envia a jogada a todos os clientes, incluindo ele próprio
         sendAllPlayers(current, resposta);
 
         if (current->jogada == 1)
-        {   
-            //Caso seja a primeira jogada e carregar numa peça
-            //bloqueada não acontece nada  
-            if (resposta.code != -20)
-            {
-                current->jogada = 2;
+        {    
+            current->jogada = 2;
 
-                //mandar para thread para começar contar 5 segundos
-                sem_post(current->sem);
-            }
+            //mandar para thread para começar contar 5 segundos
+            sem_post(current->sem);
         }
         else
         {
@@ -225,7 +224,7 @@ void *thread_client(void *arg)
     n_clientes--;
     printf("Exiting client %d thread\n", current->id);
     close(current->player_fd);
-    deleteClient(current);
+    //deleteClient(current);
     pthread_exit(NULL);  
 }
 
@@ -253,6 +252,7 @@ Client_node* insertClient(Client_node* head, int id)
     *(new_client->score)=0;
     new_client->sec2_state = 0;
     new_client->play1[0] = -1;
+    new_client->coord[0] = -2;
 
     //Novo nó aponta para o segundo da lista
     new_client->next = head;
@@ -430,10 +430,9 @@ void checkMaxScore()
 
 void informWinner()
 {
-    Client_node* aux = NULL;
+    Client_node* aux = client_list;
     int winner;
-
-    aux = client_list;        
+        
     while(aux != NULL)
     {
         //Envia o score a cada um dos jogadores
@@ -459,12 +458,14 @@ void Reset_game()
     Client_node* current = client_list;
     play_response resp;
 
+    //Da reset a board
     init_board(dimension);
+
     n_corrects = 0;
     score_winner = 0;
 
+    //Diz a todos os clientes para limparem a board
     resp.code = 5;
-
     while (current != NULL)
     {
         write(current->player_fd, &resp, sizeof(play_response));
@@ -482,22 +483,26 @@ void getBoardState(Client_node* current)
     {
         for(j = 0; j < dimension; j++)
         {
+            //pthread_mutex_lock(&mux[i]);
             if (board[linear_conv(i,j)].revealed == 1)
             {
                 if (board[linear_conv(i,j)].locked == 1)
                 {
+                    //pthread_mutex_unlock(&mux[i]);
                     resp.code = 4;
                     resp.play1[0] = i;
                     resp.play1[1] = j;
                 }
                 else if (board[linear_conv(i,j)].wrong == 1)
                 {
+                    //pthread_mutex_unlock(&mux[i]);
                     resp.code = -5;
                     resp.play1[0] = i;
                     resp.play1[1] = j;
                 }
                 else if(board[linear_conv(i,j)].first == 1)
                 {
+                    //pthread_mutex_unlock(&mux[i]);
                     resp.code = 1;
                     resp.play1[0] = i;
                     resp.play1[1] = j;
@@ -505,7 +510,8 @@ void getBoardState(Client_node* current)
                 resp.color = board[linear_conv(i, j)].color;
                 strcpy(resp.str_play1, get_board_place_str(i, j));
                 write(current->player_fd, &resp, sizeof(play_response));
-            }   
+            }
+            //pthread_mutex_unlock(&mux[i]);   
         }
     }
 }
