@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	while (!done)
 	{
 			if(jogada==1)
-			{
+			{/*
 				for(i=0; i < server_dim; i++)
 				{
 					for(j=0; j < server_dim; j++)
@@ -70,12 +70,12 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
-				}
+				}*/
 				jogada = 2;
 				board_x=rand()%server_dim;
 				board_y=rand()%server_dim;
 				sendPlay(board_x, board_y);
-				sleep(1);
+				//sleep(1);
 			}
 			if (jogada ==2)
 			{
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 				board_x=rand()%server_dim;
 				board_y=rand()%server_dim;
 				sendPlay(board_x, board_y);
-				sleep(1);
+				//sleep(1);
 			}
 		}
 	printf("fim\n");

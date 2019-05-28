@@ -31,6 +31,7 @@ typedef struct Client_node
     int play1[2];               //Variavel que guarda a primeira jogada
     int wrongplay[4];           //Guarda as coordenadas das duas jogadas se jogou mal
     int sec2_state;            
+    int exit_all;
     struct Client_node *next;   //pointeiro para o proximo jogador
     struct Client_node *prev;   //ponteiro para o jogador anterior
 }Client_node;
@@ -168,28 +169,31 @@ void *thread_client(void *arg)
     while(1)
     { 
         //Verifica se o cliente saiu do jogo
-        if (exit_game(current)) break;
+        if (exit_game(current))
+            break;
 
         //Recebe a joagada deste cliente
         read_val = read(current->player_fd, &current->coord, sizeof(current->coord));
         if (read_val != sizeof(current->coord))
         {
             printf("Error in read: %d\n", read_val);
-            exit(-1);
+            //exit(-1);
         }
 
-        printf("Check1\n");
+        //printf("Check1\n");
 
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
-        if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1) continue;
+        if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1) 
+            continue;
 
         //Processa a jogada
         resposta = board_play(current->coord[0], current->coord[1], current->play1, current->wrongplay, current->jogada, current->color, (current->score));
 
-        printf("Coord %d, %d -- Rev %d ", current->coord[0], current->coord[1], board[linear_conv(current->coord[0],current->coord[1])].revealed);
+        //printf("Coord %d, %d -- Rev %d ", current->coord[0], current->coord[1], board[linear_conv(current->coord[0],current->coord[1])].revealed);
 
-        if (resposta.code == -20) continue;
+        if (resposta.code == -20) 
+            continue;
 
         //Envia a jogada a todos os clientes, incluindo ele próprio
         sendAllPlayers(current, resposta);
@@ -221,8 +225,13 @@ void *thread_client(void *arg)
             endGame();
         }
     }
+
+
     n_clientes--;
     printf("Exiting client %d thread\n", current->id);
+    current->exit_all = 1;
+    sem_post(current->sem);
+    sem_post(current->sem);
     close(current->player_fd);
     //deleteClient(current);
     pthread_exit(NULL);  
@@ -253,6 +262,7 @@ Client_node* insertClient(Client_node* head, int id)
     new_client->sec2_state = 0;
     new_client->play1[0] = -1;
     new_client->coord[0] = -2;
+    new_client->exit_all = 0;
 
     //Novo nó aponta para o segundo da lista
     new_client->next = head;
@@ -361,7 +371,10 @@ void* thread_func(void *arg)
             Reset_game();
             game_locked = 0;
         }
+        else if (current->exit_all == 1)
+            break;
     }
+    pthread_exit(NULL);
 }
 
 void* wait5s(void* arg)
@@ -388,6 +401,8 @@ void* wait5s(void* arg)
         ts.tv_sec += 5;	
         sem_timedwait(current->sem, &ts);
         sem_getvalue(current->sem, &sem_value);
+
+        if (current->exit_all == 1) break;
 
         if (current->jogada == 2)
         {

@@ -33,6 +33,7 @@ void sendPlay(int x, int y)
 {
 	int coord[2] = {x, y};
     write(sock_fd, &coord, sizeof(coord));
+    //write(sock_fd, &coord[1], sizeof(coord[1]));
 }
 
 void checkWinner()

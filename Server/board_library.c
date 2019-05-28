@@ -68,7 +68,7 @@ void init_board(int dim)
   }
 }
 
-play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogada, Color color, int *score)
+/*play_response board_play_bad(int x, int y, int play1[2], int wrongplay[4], int jogada, Color color, int *score)
 {
   play_response resp;
   resp.code = 10;
@@ -209,6 +209,109 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
       play1[0] = -1;   
     }
   }
+  return resp;
+}*/
+
+play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogada, Color color, int *score)
+{
+  play_response resp;
+  resp.code = 10;
+
+  pthread_mutex_lock(&mux[x]);
+  if (board[linear_conv(x,y)].revealed == 0)
+  {
+    if (jogada == 1)
+    {
+      board[linear_conv(x,y)].revealed = 1;
+      pthread_mutex_unlock(&mux[x]);
+      board[linear_conv(x,y)].first = 1;
+      board[linear_conv(x,y)].color = color;
+      resp.code = 1;
+      play1[0] = x;
+      play1[1] = y;
+      resp.play1[0] = x;
+      resp.play1[1] = y;
+      strcpy(resp.str_play1, get_board_place_str(x, y)); 
+    }
+    else
+    {
+      pthread_mutex_unlock(&mux[x]);
+
+      //Se a segunda coord diferentes
+      if (!((play1[0]==x) && (play1[1]==y)))
+      {
+        char* first_str = get_board_place_str(play1[0], play1[1]);
+        char* secnd_str = get_board_place_str(x, y);
+        resp.play1[0] = play1[0];
+        resp.play1[1] = play1[1];
+        strcpy(resp.str_play1, first_str);
+        resp.play2[0] = x;
+        resp.play2[1] = y;
+        strcpy(resp.str_play2, secnd_str);
+
+        //acertou
+        if (strcmp(first_str, secnd_str) == 0)
+        {
+          board[linear_conv(x,y)].revealed = 1;
+          board[linear_conv(x,y)].locked = 1;
+          board[linear_conv(x,y)].color = color;
+          board[linear_conv(play1[0], play1[1])].locked = 1;
+          board[linear_conv(play1[0], play1[1])].first = 0;
+          n_corrects += 2;
+          (*score)++;
+          if (n_corrects == dim_board* dim_board)
+          {
+            resp.code = 3;
+          }
+          else
+          {
+            resp.code = 2;
+          }
+        }
+        //errou
+        else
+        {
+          board[linear_conv(x,y)].revealed = 1;
+          board[linear_conv(x,y)].wrong = 1;
+          board[linear_conv(play1[0], play1[1])].wrong = 1;
+          board[linear_conv(play1[0], play1[1])].first = 0;
+          board[linear_conv(x,y)].color = color;
+          //Guarda as coordenadas das duas joagadas erradas
+          wrongplay[0] = play1[0];
+          wrongplay[1] = play1[1];
+          wrongplay[2] = x;
+          wrongplay[3] = y;
+          resp.code = -2;
+        }
+      }
+      else
+      {
+        board[linear_conv(x,y)].revealed = 0;
+        board[linear_conv(x,y)].first = 0;
+        resp.play1[0]= x;
+        resp.play1[1]= y;
+        resp.code = -4;
+      }
+    } 
+  }
+  else
+  {
+    //jogada 1 em carta revelada
+    if (jogada == 1)
+    {
+      resp.code = -20;
+    }
+    //jogada 2 em carta revelada
+    else
+    {
+      board[linear_conv(play1[0],play1[1])].revealed = 0;
+      board[linear_conv(play1[0],play1[1])].first = 0;
+      resp.play1[0]= play1[0];
+      resp.play1[1]= play1[1];
+      resp.code = -4;
+    }
+  }
+  pthread_mutex_unlock(&mux[x]);
   return resp;
 }
 
