@@ -166,15 +166,11 @@ void *thread_client(void *arg)
     { 
         //Recebe a joagada deste cliente
         read_val = read(current->player_fd, &current->coord, sizeof(current->coord));
-        if (read_val == -1/*sizeof(current->coord)*/)
+        if (read_val < 1)
         {
-            printf("Error in read: %d\n", read_val);
+            printf("Exiting client %d thread\n", current->id);
             break;
-            //exit(-1);
         }
-
-        //Verifica se o cliente saiu do jogo
-        if (exit_game(current)) break;
 
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
@@ -217,16 +213,7 @@ void *thread_client(void *arg)
             endGame();
         }
     }
-    n_clientes--;
-    current->exit_all = 1;
-    sem_post(current->sem);
-    sem_post(current->sem);
-    sem_post(&(current->sem_2));
-    pthread_mutex_consistent(&mux[current->coord[0]]);
-    pthread_mutex_unlock(&mux[current->coord[0]]);
-    printf("Exiting client %d thread\n", current->id);
-    close(current->player_fd);
-    //deleteClient(current);
+    exit_game(current);
     pthread_exit(NULL);  
 }
 
@@ -417,11 +404,6 @@ void* wait5s(void* arg)
                 board[linear_conv(resp.play1[0], resp.play1[1])].first = 0;
                 board[linear_conv(resp.play1[0], resp.play1[1])].revealed = 0;
             }
-            /*if(board[linear_conv(resp.play1[0],resp.play1[1])].locked == 1)
-            {
-                printf("Jogada: %d\n", current->jogada);
-                getchar();
-            }*/
         }
         sem_getvalue(current->sem, &sem_value);
     }
@@ -544,22 +526,26 @@ int exit_game(Client_node* current)
 {
     play_response resposta;
 
-    if (current->coord[0] == -1 && current->coord[1] == -1)
+    //se sair depois de executar a primeira jogada
+    if (current->jogada == 2)
     {
-        //se sair depois de executar a primeira jogada
-        if (current->jogada == 2)
-        {
-            //Atualização da resposta para apagar
-            printf("Checkl\n");
-            resposta.code = -4;
-            resposta.play1[0] = current->play1[0];
-            resposta.play1[1] = current->play1[1];
-            board[linear_conv(resposta.play1[0], resposta.play1[1])].revealed = 0;
-            board[linear_conv(resposta.play1[0], resposta.play1[1])].wrong = 0;
-            sendAllPlayers(current, resposta);
-        }
-        return 1;
+        //Atualização da resposta para apagar
+        resposta.code = -4;
+        resposta.play1[0] = current->play1[0];
+        resposta.play1[1] = current->play1[1];
+        board[linear_conv(resposta.play1[0], resposta.play1[1])].revealed = 0;
+        board[linear_conv(resposta.play1[0], resposta.play1[1])].wrong = 0;
+        sendAllPlayers(current, resposta);
     }
+    n_clientes--;
+    current->exit_all = 1;
+    sem_post(current->sem);
+    sem_post(current->sem);
+    sem_post(&(current->sem_2));
+    pthread_mutex_consistent(&mux[current->coord[0]]);
+    pthread_mutex_unlock(&mux[current->coord[0]]);
+    close(current->player_fd);
+    deleteClient(current);
     return 0;
 }
 

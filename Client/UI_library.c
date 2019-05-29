@@ -21,11 +21,7 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b)
 	rect.w = col_width+1;
 	rect.h = row_height+1;
 
-
 	TTF_Font * font = TTF_OpenFont("arial.ttf", row_height);
-
-	int text_x = board_x * col_width;
-	int text_y = board_y * row_height;
 
 	SDL_Color color = { r, g, b };
  	SDL_Surface * surface = TTF_RenderText_Solid(font, text, color);
@@ -36,6 +32,8 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b)
 
 	SDL_RenderCopy(renderer, Background_Tx, NULL, &rect);
 	SDL_RenderPresent(renderer);
+	SDL_Delay(5);
+
 }
 
 void paint_card(int  board_x, int board_y , int r, int g, int b)
@@ -53,6 +51,7 @@ void paint_card(int  board_x, int board_y , int r, int g, int b)
 	SDL_RenderDrawRect(renderer, &rect);
 
 	SDL_RenderPresent(renderer);
+	SDL_Delay(5);
 }
 
 void clear_card(int  board_x, int board_y)
@@ -75,6 +74,7 @@ void create_board_window(int width, int height,  int dim)
 	col_width = width /n_ronw_cols;
 	screen_width = n_ronw_cols * col_width +1;
 	screen_height = n_ronw_cols *row_height +1;
+	int i;
 
 	if (SDL_CreateWindowAndRenderer(screen_width, screen_height, 0, &window, &renderer)  != 0) 
 	{
@@ -89,16 +89,18 @@ void create_board_window(int width, int height,  int dim)
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
-	for (int i = 0; i <n_ronw_cols+1; i++)
+	for (i = 0; i <n_ronw_cols+1; i++)
 	{
 		SDL_RenderDrawLine(renderer, 0, i*row_height, screen_width, i*row_height);
 	}
 
-	for (int i = 0; i <n_ronw_cols+1; i++)
+	for (i = 0; i <n_ronw_cols+1; i++)
 	{
 		SDL_RenderDrawLine(renderer, i*col_width, 0, i*col_width, screen_height);
 	}
 	SDL_RenderPresent(renderer);
+	SDL_Delay(5);
+
 }
 
 void close_board_windows()

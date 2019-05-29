@@ -1,5 +1,4 @@
 #include "communications.h"
-#include "thread_client.h"
 
 //Função Main --> Contem o main loop do jogo
 //e iniciação do UI
@@ -33,9 +32,12 @@ int main(int argc, char *argv[])
 			board_y = rand()%server_dim;
 			coord[0] = board_x;
 			coord[1] = board_y;
-    		write(sock_fd, &coord, 2*sizeof(int));
+    	//write(sock_fd, &coord, 2*sizeof(int));
+			sendPlay(board_x, board_y);
+			//sleep(1);
 	}
 	printf("fim\n");
 	free(board);
   close(sock_fd);
+	exit(0);
 }

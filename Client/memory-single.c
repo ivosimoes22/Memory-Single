@@ -52,9 +52,7 @@ int main(int argc, char *argv[]){
 			{
 				case SDL_QUIT: 
 				{
-					//Comunica ao server que vai sair
-					sendPlay(-1,-1);
-
+					//Sair do jogo
 					done = SDL_TRUE;
 					break;
 				}

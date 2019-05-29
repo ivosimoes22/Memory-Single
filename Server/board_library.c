@@ -16,6 +16,7 @@ void init_board(int dim)
   char * str_place;
   dim_board = dim;
   int alloc = 0;
+  char c1, c2;
 
   if (alloc == 0)
   {
@@ -31,9 +32,9 @@ void init_board(int dim)
     board[i].locked = 0;
   }
 
-  for (char c1 = 'a' ; c1 < ('a'+dim_board); c1++)
+  for (c1 = 'a' ; c1 < ('a'+dim_board); c1++)
   {
-    for (char c2 = 'a' ; c2 < ('a'+dim_board); c2++)
+    for (c2 = 'a' ; c2 < ('a'+dim_board); c2++)
     {
       do
       {
@@ -173,7 +174,8 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
 
 void print_board(int dim)
 {
-  for(int i = 0; i < dim*dim; i++)
+  int i;
+  for(i = 0; i < dim*dim; i++)
   {
     printf("%s ", board[i].v);
   }
