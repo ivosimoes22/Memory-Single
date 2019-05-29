@@ -21,7 +21,6 @@ typedef struct Client_node
     pthread_t client_thr;       //thread do cliente correspondente
     pthread_t timer_thread;     //thread da função contar 5 segundos
     pthread_t sec2_thread;      //thread da função contar 2 segundos
-    pthread_t sec10_thread;
     int player_fd;              //socket
     int id;                     //indice do cliente 
     int jogada;                 //Variavel para saber se é a primeira ou a segunda jogada
@@ -29,11 +28,11 @@ typedef struct Client_node
     struct Color color;         //Cor do cliente
     sem_t *sem;                 //Semáforo para controlar os 5s
     sem_t sem_2;
-    sem_t sem_10;
     int coord[2];               //Coordenadas que recebe do cliente
     int play1[2];               //Variavel que guarda a primeira jogada
     int wrongplay[4];           //Guarda as coordenadas das duas jogadas se jogou mal
     int sec2_state;            
+    int exit_all;
     struct Client_node *next;   //pointeiro para o proximo jogador
     struct Client_node *prev;   //ponteiro para o jogador anterior
 }Client_node;
@@ -42,7 +41,8 @@ typedef struct Client_node
 
 
 //------------------------------Declaração de variaveis globais---------------------------
-
+sem_t sem_10;
+pthread_t sec10_thread;
 int dimension;                      //Dimensão da board
 int client_index = 1;               //Guarda o nr total de indice de cliente 
 int n_clientes = 0;                 //Numero de clientes ligados
@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
 {
     int sock_temp;
     int sock_fd;
-    Client_node *aux = NULL;
     struct sockaddr_in local_addr;
 
     //Armar o sinal CTRL C
@@ -127,6 +126,9 @@ int main(int argc, char *argv[])
     n_corrects = 0;
 
     printf("Waiting for players\n");
+
+    //Thread para contar 10s no fim do jogo
+    pthread_create(&sec10_thread, NULL, thread_func_10, NULL);
     
     //Loop para entrar jogadores no servidor
     while(1)
@@ -140,17 +142,7 @@ int main(int argc, char *argv[])
         pthread_create(&client_list->client_thr, NULL, thread_client, (void*)client_list);
         pthread_create(&client_list->timer_thread, NULL, wait5s, (void*)client_list);
         pthread_create(&client_list->sec2_thread, NULL, thread_func_2, (void*)client_list);
-        pthread_create(&client_list->sec10_thread, NULL, thread_func_10, (void*)client_list);
     }
-
-    //Loop para esperar que todos os jogadores saiam do jogo
-    aux = client_list;
-    while(aux != NULL)
-    {
-        pthread_join(aux->client_thr, NULL);
-        aux = aux->next;
-    }
-
     close(sock_fd);
     exit(0);
 }
@@ -172,16 +164,17 @@ void *thread_client(void *arg)
     
     while(1)
     { 
-        //Verifica se o cliente saiu do jogo
-        if (exit_game(current)) break;
-
         //Recebe a joagada deste cliente
         read_val = read(current->player_fd, &current->coord, sizeof(current->coord));
-        if (read_val != sizeof(current->coord))
+        if (read_val == -1/*sizeof(current->coord)*/)
         {
             printf("Error in read: %d\n", read_val);
-            exit(-1);
+            break;
+            //exit(-1);
         }
+
+        //Verifica se o cliente saiu do jogo
+        if (exit_game(current)) break;
 
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
@@ -220,11 +213,17 @@ void *thread_client(void *arg)
         if ((n_corrects == dimension*dimension))
         {
             game_locked = 1;
-            sem_post(&(current->sem_10));
+            sem_post(&sem_10);
             endGame();
         }
     }
     n_clientes--;
+    current->exit_all = 1;
+    sem_post(current->sem);
+    sem_post(current->sem);
+    sem_post(&(current->sem_2));
+    pthread_mutex_consistent(&mux[current->coord[0]]);
+    pthread_mutex_unlock(&mux[current->coord[0]]);
     printf("Exiting client %d thread\n", current->id);
     close(current->player_fd);
     //deleteClient(current);
@@ -256,6 +255,7 @@ Client_node* insertClient(Client_node* head, int id)
     *(new_client->score)=0;
     new_client->sec2_state = 0;
     new_client->play1[0] = -1;
+    new_client->exit_all = 0;
 
     //Novo nó aponta para o segundo da lista
     new_client->next = head;
@@ -320,12 +320,11 @@ void deleteClient(Client_node* current)
 }
 void* thread_func_10(void *arg)
 {
-    Client_node* current = (Client_node*)arg;
-    sem_init(&(current->sem_10),0, 0);
+    sem_init(&(sem_10),0, 0);
 
     while(1)
     {
-        sem_wait(&(current->sem_10));
+        sem_wait(&sem_10);
         sleep(10);
         Reset_game();
         game_locked = 0;
@@ -342,6 +341,9 @@ void* thread_func_2(void *arg)
         //Se o jogador erra espera 2s
         //e volta a pintar as peças de branco
         sem_wait(&(current->sem_2));
+
+        if (current->exit_all == 1)
+            break;
 
         //Quando o jogador erra espera 2 segundos
         sleep(2);
@@ -362,10 +364,10 @@ void* thread_func_2(void *arg)
         board[linear_conv(resposta.play2[0], resposta.play2[1])].wrong = 0;
         board[linear_conv(resposta.play1[0], resposta.play1[1])].revealed = 0;
         board[linear_conv(resposta.play2[0], resposta.play2[1])].revealed = 0;
-
         current->sec2_state = 0;
         
     }
+    pthread_exit(NULL);
 }
 
 void* wait5s(void* arg)
@@ -393,9 +395,12 @@ void* wait5s(void* arg)
         sem_timedwait(current->sem, &ts);
         sem_getvalue(current->sem, &sem_value);
 
+        if (current->exit_all == 1)
+            break;
+
         if (current->jogada == 2)
         {
-            if(strcmp(get_board_place_str(current->coord[0], current->coord[1]), "") != 0)
+            if(board[linear_conv(current->coord[0], current->coord[1])].locked != 1)
             {
                 //Atualização da resposta para apagar
                 resp.code = -4;
@@ -412,6 +417,11 @@ void* wait5s(void* arg)
                 board[linear_conv(resp.play1[0], resp.play1[1])].first = 0;
                 board[linear_conv(resp.play1[0], resp.play1[1])].revealed = 0;
             }
+            /*if(board[linear_conv(resp.play1[0],resp.play1[1])].locked == 1)
+            {
+                printf("Jogada: %d\n", current->jogada);
+                getchar();
+            }*/
         }
         sem_getvalue(current->sem, &sem_value);
     }
@@ -540,6 +550,7 @@ int exit_game(Client_node* current)
         if (current->jogada == 2)
         {
             //Atualização da resposta para apagar
+            printf("Checkl\n");
             resposta.code = -4;
             resposta.play1[0] = current->play1[0];
             resposta.play1[1] = current->play1[1];
@@ -555,14 +566,18 @@ int exit_game(Client_node* current)
 void initializeMutex(int dim)
 {
     int i;
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST); 
 
     //Alocar a memoria para o vetor de mutex (Mutex por cada linha/coluna)
     mux = (pthread_mutex_t*)malloc(dim*sizeof(pthread_mutex_t));
 
     for(i = 0; i < dim; i++)
     {
-        pthread_mutex_init(&mux[i], NULL);
+        pthread_mutex_init(&mux[i], &attr);
     }
+    pthread_mutexattr_destroy(&attr);
 }
 
 void ctrl_c_callback_handler(int signum)

@@ -1,5 +1,5 @@
-#ifndef THREAD_BOT_H
-#define THREAD_BOT_H
+#ifndef THREAD_CLIENT_H
+#define THREAD_CLIENT_H
 
 #include <pthread.h>
 

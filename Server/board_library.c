@@ -80,7 +80,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
     if (jogada == 1)
     {
       board[linear_conv(x,y)].revealed = 1;
-      //pthread_mutex_unlock(&mux[x]);
+      pthread_mutex_unlock(&mux[x]);
       board[linear_conv(x,y)].first = 1;
       board[linear_conv(x,y)].color = color;
       resp.code = 1;
@@ -92,11 +92,11 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
     }
     else
     {
-      //pthread_mutex_unlock(&mux[x]);
       //acertou
       if (strcmp(first_str, secnd_str) == 0)
       {
         board[linear_conv(x,y)].revealed = 1;
+        pthread_mutex_unlock(&mux[x]);
         board[linear_conv(x,y)].locked = 1;
         board[linear_conv(x,y)].color = color;
         board[linear_conv(play1[0], play1[1])].locked = 1;
@@ -116,6 +116,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
       else
       {
         board[linear_conv(x,y)].revealed = 1;
+        pthread_mutex_unlock(&mux[x]);
         board[linear_conv(x,y)].wrong = 1;
         board[linear_conv(play1[0], play1[1])].wrong = 1;
         board[linear_conv(play1[0], play1[1])].first = 0;
@@ -137,6 +138,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
   }
   else
   {
+    pthread_mutex_unlock(&mux[x]);
     //jogada 1 em carta revelada
     if (jogada == 1)
     {
@@ -145,14 +147,24 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
     //jogada 2 em carta revelada
     else
     {
-      board[linear_conv(play1[0],play1[1])].revealed = 0;
-      board[linear_conv(play1[0],play1[1])].first = 0;
-      resp.play1[0]= play1[0];
-      resp.play1[1]= play1[1];
-      resp.code = -4;
+      pthread_mutex_lock(&mux[play1[0]]);
+      if (board[linear_conv(play1[0],play1[1])].locked != 1)
+      {
+        board[linear_conv(play1[0],play1[1])].revealed = 0;
+        pthread_mutex_unlock(&mux[play1[0]]);
+        board[linear_conv(play1[0],play1[1])].first = 0;
+        resp.play1[0]= play1[0];
+        resp.play1[1]= play1[1];
+        resp.code = -4;
+      }
+      else
+      {
+        pthread_mutex_unlock(&mux[play1[0]]);
+      }
+      
     }
   }
-  pthread_mutex_unlock(&mux[x]);
+  //pthread_mutex_unlock(&mux[x]);
   return resp;
 }
 

@@ -1,9 +1,13 @@
-#include "thread_bot.h"
+#include "thread_client.h"
 #include "communications.h"
 
 //Thread respoonsável por ler jogadas vindas do server
 
-void* readPlays(void *arg)
+//*** Mudei esta função para aqui pq não fazia muito sentido
+//estar no ficheiro das sockets ***
+
+
+/*void* readPlays(void *arg)
 {
   	play_response resp;
     int done = 0, dim=(*(int *)arg);
@@ -11,7 +15,7 @@ void* readPlays(void *arg)
     while(done != 1)
     {
 		read(sock_fd, &resp, sizeof(play_response));
-		//printf("Code %d on play1 %d %d, play2 %d %d\n", resp.code, resp.play1[0], resp.play1[1], resp.play2[0], resp.play2[1]);
+		printf("Code %d on play1 %d %d, play2 %d %d\n", resp.code, resp.play1[0], resp.play1[1], resp.play2[0], resp.play2[1]);
 
 		switch (resp.code) 
 		{
@@ -71,4 +75,4 @@ void* readPlays(void *arg)
 		}
 	}
   	pthread_exit(NULL);
-}
+}*/
