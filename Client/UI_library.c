@@ -32,7 +32,7 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b)
 
 	SDL_RenderCopy(renderer, Background_Tx, NULL, &rect);
 	SDL_RenderPresent(renderer);
-	SDL_Delay(5);
+	SDL_Delay(10);
 
 }
 
@@ -51,7 +51,7 @@ void paint_card(int  board_x, int board_y , int r, int g, int b)
 	SDL_RenderDrawRect(renderer, &rect);
 
 	SDL_RenderPresent(renderer);
-	SDL_Delay(5);
+	SDL_Delay(10);
 }
 
 void clear_card(int  board_x, int board_y)

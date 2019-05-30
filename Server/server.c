@@ -100,7 +100,6 @@ void *thread_client(void *arg)
             printf("Exiting client %d thread\n", current->id);
             break;
         }
-
         //Ignora todos os pedidos do cliente caso só esteja um jogador ligado
         //ou tenha errado a jogada (durante 2s)
         if (n_clientes < 2 || current->sec2_state == 1 || game_locked == 1) continue;
@@ -117,12 +116,14 @@ void *thread_client(void *arg)
         {            
             current->jogada = 2;
             //mandar para thread para começar contar 5 segundos
+            printf("Jogada2\n");
             sem_post(&(current->sem_5));
         }
         else
         {
             current->jogada = 1;
             //mandar sinal para interromper o temporizador
+            printf("Jogada1\n");
             sem_post(&(current->sem_5));
 
             //Verfica se o jogador errou
@@ -310,14 +311,17 @@ void* wait5s(void* arg)
         ts.tv_sec += 5;	
         sem_timedwait(&current->sem_5, &ts);
         sem_getvalue(&current->sem_5, &sem_value);
+        printf("Sai --> J%d\n\n", current->jogada);
 
         if (current->exit_all == 1)
             break;
 
         if (current->jogada == 2)
         {
-            if(board[linear_conv(current->coord[0], current->coord[1])].locked != 1)
+            if(board[linear_conv(current->coord[0], current->coord[1])].locked != 1 && 
+               board[linear_conv(current->coord[0], current->coord[1])].first == 1)
             {
+                printf("Check\n");
                 //Atualização da resposta para apagar
                 resp.code = -4;
                 resp.play1[0] = current->coord[0];
@@ -325,13 +329,12 @@ void* wait5s(void* arg)
 
                 //Comunica a todos os jogadores que passaram 5 segundos
                 //É necessário pintar a tile de branco novamente
-                sendAllPlayers(current, resp);
+                sendAllPlayers(current, resp); 
 
                 //Atualiza o board e a jogada
-                current->jogada = 1;
-                //current->play1[0] = -1;
                 board[linear_conv(resp.play1[0], resp.play1[1])].first = 0;
                 board[linear_conv(resp.play1[0], resp.play1[1])].revealed = 0;
+                current->jogada = 1;
             }
         }
         sem_getvalue(&current->sem_5, &sem_value);

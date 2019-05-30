@@ -8,11 +8,14 @@
 #include "communications.h"
 #include "thread_client.h"
 
+int done = 0;
+
 void ctrl_c_callback_handler(int signum)
 {
 	close_board_windows();
   close(sock_fd);
-	exit(0);
+	done = 1;
+	//exit(0);
 }
 
 //Função Main --> Contem o main loop do jogo
@@ -21,13 +24,12 @@ void ctrl_c_callback_handler(int signum)
 int main(int argc, char *argv[]){
 
 	SDL_Event event;
-	int done = 0;
 
 	//Armar o sinal CTRL C
 	struct sigaction act;
 	act.sa_flags = SA_SIGINFO;
 	act.sa_handler = ctrl_c_callback_handler;
-	sigaction(SIGINT, &act, NULL);
+	sigaction(SA_RESTART, &act, NULL);
   //signal(SIGINT, ctrl_c_callback_handler);
 
 	//Chack number of arguments

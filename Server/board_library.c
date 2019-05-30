@@ -4,8 +4,8 @@ int linear_conv(int i, int j)
 {
   return j*dim_board+i;
 }
-char * get_board_place_str(int i, int j){
-  //printf("\n%d, %d, %d ->%s\n",i, j, linear_conv(i,j), board[linear_conv(i, j)].v);
+char * get_board_place_str(int i, int j)
+{
   return board[linear_conv(i, j)].v;
 }
 
@@ -40,7 +40,6 @@ void init_board(int dim)
         i = random()% dim_board;
         j = random()% dim_board;
         str_place = get_board_place_str(i, j);
-        //printf("%d %d -%s-\n", i, j, str_place);
       }
       while(str_place[0] != '\0');
       
@@ -53,7 +52,6 @@ void init_board(int dim)
         i = random()% dim_board;
         j = random()% dim_board;
         str_place = get_board_place_str(i, j);
-        //printf("%d %d -%s-\n", i, j, str_place);
       }
       while(str_place[0] != '\0');
       
@@ -146,7 +144,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
     }
     //jogada 2 em carta revelada
     else
-    {
+    {  
       pthread_mutex_lock(&mux[play1[0]]);
       if (board[linear_conv(play1[0],play1[1])].locked != 1)
       {
