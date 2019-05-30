@@ -1,9 +1,19 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "UI_library.h"
 #include "communications.h"
 #include "thread_client.h"
+
+void ctrl_c_callback_handler(int signum)
+{
+	close_board_windows();
+  close(sock_fd);
+	exit(0);
+}
 
 //Função Main --> Contem o main loop do jogo
 //e iniciação do UI
@@ -12,6 +22,13 @@ int main(int argc, char *argv[]){
 
 	SDL_Event event;
 	int done = 0;
+
+	//Armar o sinal CTRL C
+	struct sigaction act;
+	act.sa_flags = SA_SIGINFO;
+	act.sa_handler = ctrl_c_callback_handler;
+	sigaction(SIGINT, &act, NULL);
+  //signal(SIGINT, ctrl_c_callback_handler);
 
 	//Chack number of arguments
 	if (argc <2)

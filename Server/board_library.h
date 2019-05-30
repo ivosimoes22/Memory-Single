@@ -25,11 +25,7 @@ typedef struct board_place
 
 typedef struct play_response
 {
-  int code; // 0 - filled
-            // 1 - 1st play
-            // 2 2nd - same plays
-            // 3 END
-            // -2 2nd - diffrent
+  int code;
   int play1[2];
   int play2[2];
   char str_play1[3], str_play2[3];
@@ -40,13 +36,13 @@ typedef struct play_response
 int dim_board;
 board_place *board;
 int n_corrects;
+int alloc;              //Flaq para que cada vez que se reinicia um jogo nao voltar a alocar memoria para a board
 pthread_mutex_t *mux;   //Vetor de mutex por cada linha
 
 //Declaração de funções
 char * get_board_place_str(int i, int j);
 void init_board(int dim);
 play_response board_play(int x, int y, int play1[2], int play2[2], int jogada, Color color, int *score);
-void print_board(int dim);
 int linear_conv(int i, int j);
 
 #endif

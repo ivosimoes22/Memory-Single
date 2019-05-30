@@ -36,7 +36,6 @@ void* readPlays(void *dim)
 				break;
 
 			case 4:
-				printf("Check!\n");
 				paint_card(resp.play1[0], resp.play1[1] , resp.color.r, resp.color.g, resp.color.b);	//Pinta as letras a preto (Bloqueia só uma carta). Utilizada 
 				write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);										// para receber a board quando um cliente entra no jogo
 				break;

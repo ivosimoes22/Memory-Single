@@ -1,79 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <math.h>
-#include <time.h>
-#include <signal.h>
-#include <semaphore.h>
-
-#include "board_library.h"
-
-//------------------------Declaração de struct para cada cliente--------------------------
-
-typedef struct Client_node
-{
-    pthread_t client_thr;       //thread do cliente correspondente
-    pthread_t timer_thread;     //thread da função contar 5 segundos
-    pthread_t sec2_thread;      //thread da função contar 2 segundos
-    int player_fd;              //socket
-    int id;                     //indice do cliente 
-    int jogada;                 //Variavel para saber se é a primeira ou a segunda jogada
-    int *score;                 //Mantem o score de cada cliente
-    struct Color color;         //Cor do cliente
-    sem_t *sem;                 //Semáforo para controlar os 5s
-    sem_t sem_2;
-    int coord[2];               //Coordenadas que recebe do cliente
-    int play1[2];               //Variavel que guarda a primeira jogada
-    int wrongplay[4];           //Guarda as coordenadas das duas jogadas se jogou mal
-    int sec2_state;            
-    int exit_all;
-    struct Client_node *next;   //pointeiro para o proximo jogador
-    struct Client_node *prev;   //ponteiro para o jogador anterior
-}Client_node;
-
-//----------------------------------------------------------------------------------------
-
-
-//------------------------------Declaração de variaveis globais---------------------------
-sem_t sem_10;
-pthread_t sec10_thread;
-int dimension;                      //Dimensão da board
-int client_index = 1;               //Guarda o nr total de indice de cliente 
-int n_clientes = 0;                 //Numero de clientes ligados
-int score_winner = 0;               //Guarda o max score entre todos clientes conectados
-Client_node *client_list = NULL;    //Lista de clientes ligados ao servidor
-int game_locked = 0;                //Flag que indica se o jogo está bloqueado quando acaba (a espera que acabe os 10s)
-
-//-----------------------------------------------------------------------------------------
-
-
-//-------------------------------Declaração de funções------------------------------------- 
-
-void *thread_client(void *arg);
-Client_node* insertClient(Client_node* head, int player_fd);
-void deleteClient(Client_node* current);
-void* wait5s(void * arg);
-void Reset_game();
-void getBoardState(Client_node* current);
-void ctrl_c_callback_handler(int signum);
-Color generateColor();
-void checkMaxScore();
-void informWinner();
-void endGame();
-int exit_game(Client_node* current);
-void* thread_func_2(void *arg);
-void* thread_func_10(void *arg);
-void sendAllPlayers(Client_node* current, play_response resposta);
-void initializeMutex(int dim);
-
-//-----------------------------------------------------------------------------------------
-
+#include "server.h"
 
 int main(int argc, char *argv[])
 {
@@ -82,7 +7,10 @@ int main(int argc, char *argv[])
     struct sockaddr_in local_addr;
 
     //Armar o sinal CTRL C
-    signal(SIGINT, ctrl_c_callback_handler);
+    struct sigaction act;
+	act.sa_flags = SA_SIGINFO;
+	act.sa_handler = ctrl_c_callback_handler;
+	sigaction(SIGINT, &act, NULL);
 	
 	if(argc != 2)
     {
@@ -124,6 +52,7 @@ int main(int argc, char *argv[])
     //Iniciar o board
     init_board(dimension);
     n_corrects = 0;
+    alloc = 0;
 
     printf("Waiting for players\n");
 
@@ -188,13 +117,13 @@ void *thread_client(void *arg)
         {            
             current->jogada = 2;
             //mandar para thread para começar contar 5 segundos
-            sem_post(current->sem);
+            sem_post(&(current->sem_5));
         }
         else
         {
             current->jogada = 1;
             //mandar sinal para interromper o temporizador
-            sem_post(current->sem);
+            sem_post(&(current->sem_5));
 
             //Verfica se o jogador errou
             if (resposta.code == -2)
@@ -202,6 +131,10 @@ void *thread_client(void *arg)
                 //Altera a variavel para outra thread processar
                 sem_post(&(current->sem_2));
                 current->sec2_state = 1;
+            }
+            else if (resposta.code == 2 || resposta.code == 3)
+            {
+                checkMaxScore(current);
             }  
         }
 
@@ -236,7 +169,6 @@ Client_node* insertClient(Client_node* head, int id)
     new_client->coord[0]=0;
     new_client->id = id;
     new_client->jogada = 1;
-    new_client->sem = malloc(sizeof(sem_t*));
     new_client->color = generateColor();
     new_client->score = malloc(sizeof(int *));
     *(new_client->score)=0;
@@ -268,7 +200,7 @@ void deleteClient(Client_node* current)
     {
         if (current->next == NULL)
         {
-            free(current->sem);
+            free(current->score);
             free(current);
             client_list=NULL;
             return;
@@ -279,9 +211,8 @@ void deleteClient(Client_node* current)
             aux = current->next;
             aux->prev = NULL;
             client_list = aux;          
-
+            free(current->score);
             //apaga o nó
-            free(current->sem);
             free(current);
             return;
         }
@@ -292,7 +223,6 @@ void deleteClient(Client_node* current)
         aux = current;
         current->prev->next = current->next;
         current->next->prev = current->prev;
-        free(aux->sem);
         free(aux);
         return;
     }
@@ -301,7 +231,7 @@ void deleteClient(Client_node* current)
     {
         aux = current;
         current->prev->next = NULL;
-        free(aux->sem);
+        free(aux->score);
         free(aux);
     }
 }
@@ -352,7 +282,6 @@ void* thread_func_2(void *arg)
         board[linear_conv(resposta.play1[0], resposta.play1[1])].revealed = 0;
         board[linear_conv(resposta.play2[0], resposta.play2[1])].revealed = 0;
         current->sec2_state = 0;
-        
     }
     pthread_exit(NULL);
 }
@@ -365,22 +294,22 @@ void* wait5s(void* arg)
     struct timespec ts;
 
     //Inicializar o semáforo
-    sem_init(current->sem, 0, 0);
+    sem_init(&(current->sem_5), 0, 0);
 
     //semáforo parado
     while(1)
 	{	
-        sem_wait(current->sem);
+        sem_wait(&current->sem_5);
             
-        sem_getvalue(current->sem, &sem_value);
+        sem_getvalue(&current->sem_5, &sem_value);
         if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
         {
             exit(-1);
         }
         //Conta 5 segundos	
         ts.tv_sec += 5;	
-        sem_timedwait(current->sem, &ts);
-        sem_getvalue(current->sem, &sem_value);
+        sem_timedwait(&current->sem_5, &ts);
+        sem_getvalue(&current->sem_5, &sem_value);
 
         if (current->exit_all == 1)
             break;
@@ -405,7 +334,7 @@ void* wait5s(void* arg)
                 board[linear_conv(resp.play1[0], resp.play1[1])].revealed = 0;
             }
         }
-        sem_getvalue(current->sem, &sem_value);
+        sem_getvalue(&current->sem_5, &sem_value);
     }
     pthread_exit(NULL);
 }
@@ -446,7 +375,6 @@ void informWinner()
 
 void endGame()
 {
-    checkMaxScore();
     informWinner();
 }
 
@@ -539,8 +467,8 @@ int exit_game(Client_node* current)
     }
     n_clientes--;
     current->exit_all = 1;
-    sem_post(current->sem);
-    sem_post(current->sem);
+    sem_post(&current->sem_5);
+    sem_post(&current->sem_5);
     sem_post(&(current->sem_2));
     pthread_mutex_consistent(&mux[current->coord[0]]);
     pthread_mutex_unlock(&mux[current->coord[0]]);
@@ -568,8 +496,6 @@ void initializeMutex(int dim)
 
 void ctrl_c_callback_handler(int signum)
 {
-    printf("\nCaught signal Ctr-C\n");
-
     Client_node* current = client_list;
     Client_node* aux;
 
@@ -581,6 +507,7 @@ void ctrl_c_callback_handler(int signum)
         current = current->next;
         deleteClient(aux);
     }
+    pthread_mutex_destroy(mux);
     free(board);
 	exit(0);
 }

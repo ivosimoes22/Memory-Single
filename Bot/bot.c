@@ -28,13 +28,12 @@ int main(int argc, char *argv[])
 
 	while (!done)
 	{
-			board_x = rand()%server_dim;
-			board_y = rand()%server_dim;
+			board_x = random()%server_dim;
+			board_y = random()%server_dim;
 			coord[0] = board_x;
 			coord[1] = board_y;
-    	//write(sock_fd, &coord, 2*sizeof(int));
 			sendPlay(board_x, board_y);
-			//sleep(1);
+			usleep(100);
 	}
 	printf("fim\n");
 	free(board);

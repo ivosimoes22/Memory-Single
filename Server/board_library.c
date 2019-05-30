@@ -15,7 +15,6 @@ void init_board(int dim)
   int i, j;
   char * str_place;
   dim_board = dim;
-  int alloc = 0;
   char c1, c2;
 
   if (alloc == 0)
@@ -167,16 +166,4 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
   }
   //pthread_mutex_unlock(&mux[x]);
   return resp;
-}
-
-//Função para Debugging -> Só para saber se a board
-//enviada para cada cliente corretamente
-
-void print_board(int dim)
-{
-  int i;
-  for(i = 0; i < dim*dim; i++)
-  {
-    printf("%s ", board[i].v);
-  }
 }
