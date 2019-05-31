@@ -6,6 +6,8 @@
 #include <string.h>
 #include <pthread.h>
 
+//Estrutura da cor para cada cliente
+
 typedef struct Color
 {
     int r;
@@ -33,9 +35,10 @@ typedef struct play_response
 }play_response;
 
 //Variaveis usadas no board_place.c
-int dim_board;
-board_place *board;
-int n_corrects;
+
+int dim_board;          //Diemnsao da board (argv)
+board_place *board;     //Vetor de estruturas board_place --> representa o board
+int n_corrects;         //Numero de peças locked, no jogo
 int alloc;              //Flaq para que cada vez que se reinicia um jogo nao voltar a alocar memoria para a board
 pthread_mutex_t *mux;   //Vetor de mutex por cada linha
 

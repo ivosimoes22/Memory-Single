@@ -10,8 +10,10 @@ void* readPlays(void *dim)
 
     while(1)
     {
-      read(sock_fd, &resp, sizeof(play_response));
-			//printf("Code %d on play1 %d %d, play2 %d %d\n", resp.code, resp.play1[0], resp.play1[1], resp.play2[0], resp.play2[1]);
+      if (read(sock_fd, &resp, sizeof(play_response)) < 1)
+			{
+				done = 1;
+			}
 
       switch (resp.code) 
 			{
@@ -52,12 +54,12 @@ void* readPlays(void *dim)
 				break;
 
 			case -3:
-				paint_card(resp.play1[0], resp.play1[1] , 255, 255, 255);
+				paint_card(resp.play1[0], resp.play1[1] , 255, 255, 255);															//Apaga duas cartas
 				paint_card(resp.play2[0], resp.play2[1] , 255, 255, 255);
 				break;
 				
 			case -4:
-				paint_card(resp.play1[0], resp.play1[1] , 255, 255, 255);
+				paint_card(resp.play1[0], resp.play1[1] , 255, 255, 255);															//Apaga uma carta
 				break;
 
 			case -5:

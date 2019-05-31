@@ -25,32 +25,19 @@ void initSocket(char *address)
 int getDimension()
 {
     int dim;
-    read(sock_fd, &dim, sizeof(dim));
+    if (read(sock_fd, &dim, sizeof(dim)) < 1)
+    {
+        done = 1;
+        return 0;
+    }
     return dim;
 }
 
 void sendPlay(int x, int y)
 {
 	int coord[2] = {x, y};
-    write(sock_fd, &coord, sizeof(coord));
-}
-
-void checkWinner()
-{
-	int winner = 0;
-    int score;
-
-    //Recebe do servidor o próprio score e impreme-o no ecran
-	read(sock_fd, &score, sizeof(int));
-	printf("\nYour score is %d!!\n", score);
-
-    //Recebe do servidor se tem o max score (1 || 0)
-    //e imprime se ganhou ou perdeu
-	read(sock_fd, &winner, sizeof(int));
-	if (winner == 1)
-		printf("\nYou have the max score!! You won the game!!\n");
-	else
-		printf("\nYou lost! Better luck next time :)\n");
-
-	return;
+    if (write(sock_fd, &coord, sizeof(coord)) < 1)
+    {
+        done = 1;
+    }
 }

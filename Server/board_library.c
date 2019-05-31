@@ -17,11 +17,17 @@ void init_board(int dim)
   dim_board = dim;
   char c1, c2;
 
+  //Condição para o ser só alocada memória para o board
+  //só quando se inicia o servidor
   if (alloc == 0)
   {
     board = malloc(sizeof(board_place)* dim *dim);
     alloc = 1;
   }
+
+  //Incializar todas as variáveis
+  //referentes à board a 0
+
   for( i=0; i < (dim_board*dim_board); i++)
   {
     board[i].v[0] = '\0';
@@ -119,6 +125,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
         board[linear_conv(play1[0], play1[1])].wrong = 1;
         board[linear_conv(play1[0], play1[1])].first = 0;
         board[linear_conv(x,y)].color = color;
+
         //Guarda as coordenadas das duas joagadas erradas
         wrongplay[0] = play1[0];
         wrongplay[1] = play1[1];
@@ -137,6 +144,7 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
   else
   {
     pthread_mutex_unlock(&mux[x]);
+    
     //jogada 1 em carta revelada
     if (jogada == 1)
     {
@@ -162,6 +170,5 @@ play_response board_play(int x, int y, int play1[2], int wrongplay[4], int jogad
       
     }
   }
-  //pthread_mutex_unlock(&mux[x]);
   return resp;
 }

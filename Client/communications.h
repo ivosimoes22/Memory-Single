@@ -12,7 +12,8 @@
 
 #include "thread_client.h"
 
-// Variaveis Globais para comunicar com o servidor	
+// Variaveis Globais para comunicar com o servidor
+	
 int sock_fd;
 struct sockaddr_in server_addr;
 

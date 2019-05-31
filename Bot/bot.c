@@ -5,7 +5,8 @@
 
 int main(int argc, char *argv[])
 {
-	int done = 0;
+	done = 0;
+	
 	//Chack number of arguments
 	if (argc <2)
 	{
@@ -21,6 +22,7 @@ int main(int argc, char *argv[])
 
 	int board_x, board_y;
 
+	//Loop do jogo
 	while (!done)
 	{
 			board_x = random()%server_dim;
@@ -28,8 +30,6 @@ int main(int argc, char *argv[])
 			sendPlay(board_x, board_y);
 			usleep(100);
 	}
-	printf("fim\n");
-	free(board);
   close(sock_fd);
 	exit(0);
 }

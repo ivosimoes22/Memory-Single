@@ -1,36 +1,21 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "UI_library.h"
 #include "communications.h"
 #include "thread_client.h"
 
-int done = 0;
-
-void ctrl_c_callback_handler(int signum)
-{
-	close_board_windows();
-  close(sock_fd);
-	done = 1;
-	//exit(0);
-}
-
 //Função Main --> Contem o main loop do jogo
 //e iniciação do UI
 
-int main(int argc, char *argv[]){
-
+int main(int argc, char *argv[])
+{
+	int server_dim;
 	SDL_Event event;
-
-	//Armar o sinal CTRL C
-	struct sigaction act;
-	act.sa_flags = SA_SIGINFO;
-	act.sa_handler = ctrl_c_callback_handler;
-	sigaction(SA_RESTART, &act, NULL);
-  //signal(SIGINT, ctrl_c_callback_handler);
+	done = 0;
 
 	//Chack number of arguments
 	if (argc <2)
@@ -55,7 +40,13 @@ int main(int argc, char *argv[]){
 	initSocket(argv[1]);
 
 	//Recebe a dimensão vinda do servidor
-	int server_dim = getDimension();
+	server_dim = getDimension();
+
+	if (server_dim == 0)
+	{
+		close(sock_fd);
+		exit(0);
+	}
 
 	//Cria a thread para ler as jogadas vindas do servidor
 	create_board_window(75*server_dim, 75*server_dim, server_dim);
@@ -88,7 +79,6 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	printf("fim\n");
 	close_board_windows();
   close(sock_fd);
 	exit(1);

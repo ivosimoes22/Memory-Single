@@ -99,7 +99,7 @@ void create_board_window(int width, int height,  int dim)
 		SDL_RenderDrawLine(renderer, i*col_width, 0, i*col_width, screen_height);
 	}
 	SDL_RenderPresent(renderer);
-	SDL_Delay(5);
+	SDL_Delay(10);
 
 }
 

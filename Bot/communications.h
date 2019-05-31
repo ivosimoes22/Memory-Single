@@ -10,14 +10,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-typedef struct board_place{
-  char v[3];
-  int locked;             //Flag se a peça está bloqueada (Acertou a segunda jogada)
-} board_place;
-
-// Variaveis Globais para comunicar com o servidor
-board_place *board;		
+// Variaveis Globais para comunicar com o servidor	
 int sock_fd;
+int done;
 struct sockaddr_in server_addr;
 
 //Declaração de funções
@@ -27,6 +22,5 @@ int getDimension();
 void getBoard(int dim);
 void sendPlay(int x, int y);
 void* readPlays(void *arg);
-void checkWinner();
 
 #endif
