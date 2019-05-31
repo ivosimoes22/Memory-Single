@@ -26,7 +26,6 @@ pthread_t read_thread;
 
 //Variveis globais
 int done;
-int score_winner;
 
 //Declaração da função thread que está a
 //receber as respostas do server

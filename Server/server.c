@@ -126,6 +126,9 @@ void *thread_client(void *arg)
         if (resposta.code == -20) 
             continue;
 
+        //Envia a jogada a todos os clientes, incluindo ele próprio
+        sendAllPlayers(current, resposta);
+
         if (current->jogada == 1)
         {            
             current->jogada = 2;
@@ -167,9 +170,6 @@ void *thread_client(void *arg)
             //Informa os clientes quem ganhou
             informWinner();
         }
-
-        //Envia a jogada a todos os clientes, incluindo ele próprio
-        sendAllPlayers(current, resposta);
     }
     exit_game(current);
     pthread_exit(NULL);  
@@ -417,23 +417,25 @@ void checkMaxScore()
 void informWinner()
 {
     Client_node* aux = NULL;
-    int winner;
+    int result[2] = {0};
 
     pthread_rwlock_rdlock(&rwlock);
     aux = client_list;        
     while(aux != NULL)
     {
-        //Envia o score a cada um dos jogadores
-        if (write(aux->player_fd, &(*aux->score), sizeof(int)) < 1)
+        result[0] = (*aux->score);
+        
+        if((*aux->score) == score_winner)
         {
-            close(aux->player_fd);
+            result[1] = 1;
+        }
+        else 
+        {
+            result[1]= 0;
         }
 
-        if((*aux->score) == score_winner)
-            winner = 1;
-        else winner = 0;
-
-        if(write(aux->player_fd, &winner, sizeof(int)) < 1)
+        //Envia o score a cada um dos jogadores
+        if (write(aux->player_fd, &result, sizeof(result)) < 1)
         {
             close(aux->player_fd);
         }

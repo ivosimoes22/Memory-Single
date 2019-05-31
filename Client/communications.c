@@ -44,25 +44,18 @@ void sendPlay(int x, int y)
 
 void checkWinner()
 {
-	int winner = 0;
-    int score;
+	int result[2];
 
     //Recebe do servidor o próprio score e impreme-o no ecran
-	if (read(sock_fd, &score, sizeof(int)) < 1)
+	if (read(sock_fd, &result, sizeof(result)) < 1)
     {
         done = 1;
         return;
     }
-	printf("\nYour score is %d!!\n", score);
+	printf("\nYour score is %d!!\n", result[0]);
 
-    //Recebe do servidor se tem o max score (1 || 0)
-    //e imprime se ganhou ou perdeu
-	if (read(sock_fd, &winner, sizeof(int)) < 1)
-    {
-        done = 1;
-        return;
-    }
-	if (winner == 1)
+
+	if (result[1] == 1)
 		printf("\nYou have the max score!! You won the game!!\n");
 	else
 		printf("\nYou lost! Better luck next time :)\n");

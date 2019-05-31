@@ -34,7 +34,7 @@ void* readPlays(void *dim)
 				write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);										//mas na última jogada, e seguidamente verifica o score
 				paint_card(resp.play2[0], resp.play2[1] , resp.color.r, resp.color.g, resp.color.b);
 				write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
-				checkWinner(score_winner);
+				checkWinner();
 				break;
 
 			case 4:
